@@ -19,12 +19,14 @@ void main() {
     // ambient
     float ambientStrength = 0.1;
     vec3 ambient = ambientStrength * lightAttr.lightColor;
+    //展示这一部分只能改变lightColor
       
     // diffuse
     vec3 norm = normalize(fragNormal);
     vec3 lightDir = normalize(lightAttr.lightPos - fragPos);
     float diff = max(dot(norm, lightDir), 0.0);
     vec3 diffuse = diff * lightAttr.lightColor;
+    //展示模型的各个部分
     
     // specular
     float specularStrength = 0.5;
@@ -32,6 +34,7 @@ void main() {
     vec3 reflectDir = reflect(-lightDir, norm);
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
     vec3 specular = specularStrength * spec * lightAttr.lightColor;
+    //高光
         
     vec3 result = (ambient + diffuse + specular) * fragColor.rgb;
     outColor = vec4(result, fragColor.a);

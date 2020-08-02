@@ -264,8 +264,8 @@ private:
 		vkDestroyBuffer(device, indexBuffer, nullptr);
 		vkFreeMemory(device, indexBufferMemory, nullptr);
 
-		vkDestroyBuffer(device, vertexBuffer, nullptr);
-		vkFreeMemory(device, vertexBufferMemory, nullptr);
+//		vkDestroyBuffer(device, vertexBuffer, nullptr);
+//		vkFreeMemory(device, vertexBufferMemory, nullptr);
 
 		for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
 			vkDestroySemaphore(device, renderFinishedSemaphores[i], nullptr);
@@ -1308,8 +1308,6 @@ private:
 		if (vkCreateBuffer(device, &bufferInfo, nullptr, &buffer) != VK_SUCCESS) {
 			throw std::runtime_error("failed to create buffer!");
 		}
-        
-        printf("wtf?");
 
 		VkMemoryRequirements memRequirements;
 		vkGetBufferMemoryRequirements(device, buffer, &memRequirements);
@@ -1474,9 +1472,11 @@ private:
         auto currentTime = std::chrono::high_resolution_clock::now();
         float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
         
-        float r = static_cast<float>(static_cast<uint8_t>(time) % 255) / 255.0f;
-        float g = static_cast<float>((255 - (static_cast<uint8_t>(time) % 255)) % 255) / 255.0f;
-        float b = 0.6f;
+//        float r = static_cast<float>(static_cast<uint8_t>(time) % 255) / 255.0f;
+        float r = 0.5f;
+//        float g = static_cast<float>((255 - (static_cast<uint8_t>(time) % 255)) % 255) / 255.0f;
+        float g = 0.5f;
+        float b = 0.5f;
         
         auto vertexDataSmallBox = Objects::generateBoxData(
             glm::vec3(165.0f, 165.0f, 165.0f),
@@ -1485,7 +1485,7 @@ private:
         auto vertexDataBigBox = Objects::generateBoxData(
             glm::vec3(165.0f, 330.0f, 165.0f),
             glm::vec3(368.0f, 165.0f, 351.0f), glm::vec4(0.0f, 1.0f, 0.0f, -1.27f),
-            glm::vec4(r, g, b, 1.0f));
+                                                         glm::vec4(r, g, b, 1.0f));
         auto vertexDataSceneBox = Objects::generateSceneData();
         
         vertexData.clear();
@@ -1517,6 +1517,7 @@ private:
         
 		auto currentTime = std::chrono::high_resolution_clock::now();
 		float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
+        
 
 		UniformBufferObject ubo{};
 		//ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
@@ -1524,9 +1525,15 @@ private:
 		ubo.model = glm::mat4(1.0f);
 
 		//ubo.view = glm::lookAt(glm::vec3(22.0f, 22.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-        glm::mat4 cameraModel = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-        glm::vec3 cameraPos(cameraModel * glm::vec4(glm::vec3(0.0f, 273.0f, -1078.0f), 1.0));
-        cameraPos += glm::vec3(278.0f, 0.0f, 278.0f);
+        glm::vec3 cameraPos;
+        if (time < 8.0f) {
+            glm::mat4 cameraModel = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+            cameraPos = glm::vec3(cameraModel * glm::vec4(glm::vec3(0.0f, 273.0f, -1078.0f), 1.0));
+            cameraPos += glm::vec3(278.0f, 0.0f, 278.0f);
+        }
+        else {
+            cameraPos = glm::vec3(278.0f, 273.0f, -800.0f);
+        }
 //        ubo.view = glm::lookAt(cameraPos, glm::vec3(278.0f, 273.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         ubo.view = glm::lookAt(cameraPos, glm::vec3(278.0f, 273.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 //        ubo.view = glm::lookAt(cameraPos[i=(i+1)%2], glm::vec3(278.0f, 273.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
@@ -1542,13 +1549,28 @@ private:
 
 
 		UniformLightAttr lightAttr{};
-        
-        float r = static_cast<float>(static_cast<uint8_t>(time) % 255) / 255.0f;
-        float g = static_cast<float>((255 - (static_cast<uint8_t>(time) % 255)) % 255) / 255.0f;
-//        float g = static_cast<float>(rand() % 255) / 255.0f;
-//        float b = static_cast<float>(rand() % 255) / 255.0f;
-//        printf("%f %f\n", r, g);
-        lightAttr.lightColor = glm::vec3(r, g, 0.6);
+        static float r = 0.6f;
+        static float g = 0.6f;
+        static float b = 0.6f;
+        static float rr = 1.0f;
+        static float gg = 0.0f;
+//        if (time > 8.0f && r <= 1.0f && g > 0.0f)  {
+////            r = static_cast<float>(static_cast<uint8_t>(time) % 255) / 255.0f;
+////            g = static_cast<float>((255 - (static_cast<uint8_t>(time) % 255)) % 255) / 255.0f;
+//            r += 0.001;
+//            if (r > 1.0f) r  = 1.0f;
+//            g -= 0.001;
+//            b = 0.0f;
+//        }
+        if (time > 8.0f && rr > 0.0f) {
+            rr -= 0.001f;
+            gg += 0.001f;
+            r = rr;
+            g = gg;
+            b = 0.0f;
+        }
+        printf("%f, %f, %f\n", r, g, b) ;
+        lightAttr.lightColor = glm::vec3(r, g, b);
 //		lightAttr.lightPos = glm::vec3(278.0f, 548.0f, 278.0f);
         lightAttr.lightPos = glm::vec3(278.0f, 548.0f, 278.0f);
 //		lightAttr.viewPos = glm::vec3(278.0f, 273.0f, -800.0f);
