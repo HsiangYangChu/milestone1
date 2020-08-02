@@ -16,7 +16,7 @@
 		2FD2C17824AE2C280047FF2E /* libvulkan.1.2.141.dylib in CopyFiles */ = {isa = PBXBuildFile; fileRef = 2FD2C17524AE2B940047FF2E /* libvulkan.1.2.141.dylib */; };
 		2FD2C17924AE2C280047FF2E /* libvulkan.1.dylib in CopyFiles */ = {isa = PBXBuildFile; fileRef = 2FD2C17424AE2B940047FF2E /* libvulkan.1.dylib */; };
 		2FD2C17A24AE2C280047FF2E /* libglfw.3.4.dylib in CopyFiles */ = {isa = PBXBuildFile; fileRef = 2FD2C17224AE2B150047FF2E /* libglfw.3.4.dylib */; };
-		2FFFD5BC24D32F3700836954 /* Objects.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2FFFD5BA24D32F3700836954 /* Objects.cpp */; };
+		2FFFD5D024D65A6600836954 /* Objects.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2FFFD5CD24D65A6600836954 /* Objects.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -45,10 +45,10 @@
 		2FD2C17524AE2B940047FF2E /* libvulkan.1.2.141.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libvulkan.1.2.141.dylib; path = ../../../vulkansdk/macOS/lib/libvulkan.1.2.141.dylib; sourceTree = "<group>"; };
 		2FE7F5B624CEE5A400C41D1A /* texture.jpeg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = texture.jpeg; sourceTree = "<group>"; };
 		2FFFD5B524D260A900836954 /* VulkanTesting */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = VulkanTesting; sourceTree = BUILT_PRODUCTS_DIR; };
-		2FFFD5B924D32F3700836954 /* HelloTriangleApplication.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = HelloTriangleApplication.h; path = "../../../../Desktop/code_cornellbox1的副本/HelloTriangleApplication.h"; sourceTree = "<group>"; };
-		2FFFD5BA24D32F3700836954 /* Objects.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Objects.cpp; path = "../../../../Desktop/code_cornellbox1的副本/Objects.cpp"; sourceTree = "<group>"; };
-		2FFFD5BB24D32F3700836954 /* Objects.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Objects.h; path = "../../../../Desktop/code_cornellbox1的副本/Objects.h"; sourceTree = "<group>"; };
 		2FFFD5BD24D3302500836954 /* stb_image.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = stb_image.h; sourceTree = "<group>"; };
+		2FFFD5CD24D65A6600836954 /* Objects.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Objects.cpp; sourceTree = "<group>"; };
+		2FFFD5CE24D65A6600836954 /* Objects.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Objects.h; sourceTree = "<group>"; };
+		2FFFD5CF24D65A6600836954 /* HelloTriangleApplication.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HelloTriangleApplication.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -90,10 +90,10 @@
 		2FD2C16924AE1F250047FF2E /* VulkanTesting */ = {
 			isa = PBXGroup;
 			children = (
+				2FFFD5CF24D65A6600836954 /* HelloTriangleApplication.h */,
+				2FFFD5CD24D65A6600836954 /* Objects.cpp */,
+				2FFFD5CE24D65A6600836954 /* Objects.h */,
 				2FFFD5BD24D3302500836954 /* stb_image.h */,
-				2FFFD5B924D32F3700836954 /* HelloTriangleApplication.h */,
-				2FFFD5BA24D32F3700836954 /* Objects.cpp */,
-				2FFFD5BB24D32F3700836954 /* Objects.h */,
 				2FD2C16A24AE1F250047FF2E /* main.cpp */,
 			);
 			path = VulkanTesting;
@@ -176,7 +176,7 @@
 			files = (
 				2F32EB8B24B714AB00BD4E00 /* shader.frag in Sources */,
 				2F32EB8924B7146C00BD4E00 /* shader.vert in Sources */,
-				2FFFD5BC24D32F3700836954 /* Objects.cpp in Sources */,
+				2FFFD5D024D65A6600836954 /* Objects.cpp in Sources */,
 				2FD2C16B24AE1F250047FF2E /* main.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
