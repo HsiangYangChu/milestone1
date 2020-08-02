@@ -1110,7 +1110,6 @@ private:
 	}
 
 	void createVertexBuffer() {
-		//VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
 
 		auto vertexDataSmallBox = Objects::generateBoxData(
 			glm::vec3(165.0f, 165.0f, 165.0f),
@@ -1122,10 +1121,6 @@ private:
 			glm::vec4(0.5f, 0.5f, 0.5f, 1.0f));
 		auto vertexDataSceneBox = Objects::generateSceneData();
 
-		//vertexData = Objects::generateBoxData(
-		//		glm::vec3(165.0f, 165.0f, 165.0f),
-		//		glm::vec3(185.0f, 82.5f, 169.0f), glm::vec4(0.0f, 1.0f, 0.0f, -0.29f),
-		//		glm::vec3(0.5f, 0.5f, 0.5f));
 		vertexData.insert(vertexData.end(), vertexDataSmallBox.begin(), vertexDataSmallBox.end());
 		vertexData.insert(vertexData.end(), vertexDataBigBox.begin(), vertexDataBigBox.end());
 		vertexData.insert(vertexData.end(), vertexDataSceneBox.begin(), vertexDataSceneBox.end());
@@ -1150,8 +1145,6 @@ private:
 	}
 
 	void createIndexBuffer() {
-		//std::vector<uint16_t> index = Objects::generateIndex(0, false, false);
-
 		auto indexDataSmallBox = Objects::generateIndex(0, false);
 		auto indexDataBigBox = Objects::generateIndex(24, false);
 		auto indexDataSceneBox = Objects::generateIndex(48, true);
@@ -1472,10 +1465,13 @@ private:
 
 
 		UniformLightAttr lightAttr{};
-        float r = static_cast<float>(rand() % 255) / 255.0f;
-        float g = static_cast<float>(rand() % 255) / 255.0f;
-        float b = static_cast<float>(rand() % 255) / 255.0f;
-        lightAttr.lightColor = glm::vec3(r, g, b );
+        
+        float r = static_cast<float>(static_cast<uint8_t>(time) % 255) / 255.0f;
+        float g = static_cast<float>((255 - (static_cast<uint8_t>(time) % 255)) % 255) / 255.0f;
+//        float g = static_cast<float>(rand() % 255) / 255.0f;
+//        float b = static_cast<float>(rand() % 255) / 255.0f;
+        printf("%f %f\n", r, g);
+        lightAttr.lightColor = glm::vec3(r, g, 0.6);
 //		lightAttr.lightPos = glm::vec3(278.0f, 548.0f, 278.0f);
         lightAttr.lightPos = glm::vec3(278.0f, 548.0f, 278.0f);
 //		lightAttr.viewPos = glm::vec3(278.0f, 273.0f, -800.0f);
