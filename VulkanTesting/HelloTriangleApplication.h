@@ -141,6 +141,9 @@ private:
 	VkDeviceMemory vertexBufferMemory;
 	VkBuffer indexBuffer;
 	VkDeviceMemory indexBufferMemory;
+    
+    std::vector<VkBuffer> vertexBuffers;
+    std::vector<VkDeviceMemory> vertexBuffersMemory;
 
 	std::vector<VkBuffer> uniformBuffers;
 	std::vector<VkDeviceMemory> uniformBuffersMemory;
@@ -193,7 +196,8 @@ private:
 		createTextureImage();
 		createTextureImageView();
 		createTextureSampler();
-		createVertexBuffer();
+//		createVertexBuffer();
+        createVertexBuffers();
 		createIndexBuffer();
 		createUniformBuffers();
 		createDescriptorPool();
@@ -239,6 +243,8 @@ private:
 			vkFreeMemory(device, uniformBuffersMemory[i], nullptr);
 			vkDestroyBuffer(device, uniformLightBuffers[i], nullptr);
 			vkFreeMemory(device, uniformLightBuffersMemory[i], nullptr);
+            vkDestroyBuffer(device, vertexBuffers[i], nullptr);
+            vkFreeMemory(device, vertexBuffersMemory[i], nullptr);
 		}
 
 		vkDestroyDescriptorPool(device, descriptorPool, nullptr);
@@ -302,6 +308,7 @@ private:
 		createGraphicsPipeline2();
 		createDepthResources();
 		createFramebuffers();
+        createVertexBuffers();
 		createUniformBuffers();
 		createDescriptorPool();
 		createDescriptorSets();
@@ -1143,6 +1150,31 @@ private:
 		vkDestroyBuffer(device, stagingBuffer, nullptr);
 		vkFreeMemory(device, stagingBufferMemory, nullptr);
 	}
+    
+    void createVertexBuffers(){
+        auto vertexDataSmallBox = Objects::generateBoxData(
+            glm::vec3(165.0f, 165.0f, 165.0f),
+            glm::vec3(185.0f, 82.5f, 169.0f), glm::vec4(0.0f, 1.0f, 0.0f, -0.29f),
+            glm::vec4(0.5f, 0.5f, 0.5f, 0.5f));
+        auto vertexDataBigBox = Objects::generateBoxData(
+            glm::vec3(165.0f, 330.0f, 165.0f),
+            glm::vec3(368.0f, 165.0f, 351.0f), glm::vec4(0.0f, 1.0f, 0.0f, -1.27f),
+            glm::vec4(0.5f, 0.5f, 0.5f, 1.0f));
+        auto vertexDataSceneBox = Objects::generateSceneData();
+
+        vertexData.insert( vertexData.end(), vertexDataSmallBox.begin(), vertexDataSmallBox.end());
+        vertexData.insert(vertexData.end(), vertexDataBigBox.begin(), vertexDataBigBox.end());
+        vertexData.insert(vertexData.end(), vertexDataSceneBox.begin(), vertexDataSceneBox.end());
+
+        VkDeviceSize bufferSize = sizeof(vertexData[0]) * vertexData.size();
+        
+        vertexBuffers.resize(swapChainImages.size());
+        vertexBuffersMemory.resize(swapChainImages.size());
+        
+        for (size_t i = 0; i < swapChainImages.size(); i++) {
+            createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexBuffers[i], vertexBuffersMemory[i]);
+        }
+    }
 
 	void createIndexBuffer() {
 		auto indexDataSmallBox = Objects::generateIndex(0, false);
@@ -1389,9 +1421,10 @@ private:
 
 			vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
 
-			VkBuffer vertexBuffers[] = { vertexBuffer };
-			VkDeviceSize offsets[] = { 0 };
-			vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, vertexBuffers, offsets);
+			VkBuffer vertexBuffersTmp[] = { vertexBuffers[i] };
+			VkDeviceSize offsetsTmp[] = { 0 };
+			vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, vertexBuffersTmp, offsetsTmp);
+//            vkCmdBindVertexBuffers(<#VkCommandBuffer commandBuffer#>, <#uint32_t firstBinding#>, <#uint32_t bindingCount#>, <#const VkBuffer *pBuffers#>, <#const VkDeviceSize *pOffsets#>)
 
 			vkCmdBindIndexBuffer(commandBuffers[i], indexBuffer, 0, VK_INDEX_TYPE_UINT16);
 
@@ -1434,6 +1467,50 @@ private:
 			}
 		}
 	}
+    
+    void updateVertexBuffer(uint32_t currentImage){
+        static auto startTime = std::chrono::high_resolution_clock::now();
+        
+        auto currentTime = std::chrono::high_resolution_clock::now();
+        float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
+        
+        float r = static_cast<float>(static_cast<uint8_t>(time) % 255) / 255.0f;
+        float g = static_cast<float>((255 - (static_cast<uint8_t>(time) % 255)) % 255) / 255.0f;
+        float b = 0.6f;
+        
+        auto vertexDataSmallBox = Objects::generateBoxData(
+            glm::vec3(165.0f, 165.0f, 165.0f),
+            glm::vec3(185.0f, 82.5f, 169.0f), glm::vec4(0.0f, 1.0f, 0.0f, -0.29f),
+            glm::vec4(0.5f, 0.5f, 0.5f, 0.5f));
+        auto vertexDataBigBox = Objects::generateBoxData(
+            glm::vec3(165.0f, 330.0f, 165.0f),
+            glm::vec3(368.0f, 165.0f, 351.0f), glm::vec4(0.0f, 1.0f, 0.0f, -1.27f),
+            glm::vec4(r, g, b, 1.0f));
+        auto vertexDataSceneBox = Objects::generateSceneData();
+        
+        vertexData.clear();
+        vertexData.insert(vertexData.end(), vertexDataSmallBox.begin(), vertexDataSmallBox.end());
+        vertexData.insert(vertexData.end(), vertexDataBigBox.begin(), vertexDataBigBox.end());
+        vertexData.insert(vertexData.end(), vertexDataSceneBox.begin(), vertexDataSceneBox.end());
+
+        VkDeviceSize bufferSize = sizeof(vertexData[0]) * vertexData.size();
+        
+        VkBuffer stagingBuffer;
+        VkDeviceMemory stagingBufferMemory;
+        createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+
+        void* data;
+        vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
+        memcpy(data, vertexData.data(), (size_t)bufferSize);
+        vkUnmapMemory(device, stagingBufferMemory);
+
+//        createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexBuffer, vertexBufferMemory);
+
+        copyBuffer(stagingBuffer, vertexBuffers[currentImage], bufferSize);
+
+        vkDestroyBuffer(device, stagingBuffer, nullptr);
+        vkFreeMemory(device, stagingBufferMemory, nullptr);
+    }
 
 	void updateUniformBuffer(uint32_t currentImage) {
 		static auto startTime = std::chrono::high_resolution_clock::now();
@@ -1470,7 +1547,7 @@ private:
         float g = static_cast<float>((255 - (static_cast<uint8_t>(time) % 255)) % 255) / 255.0f;
 //        float g = static_cast<float>(rand() % 255) / 255.0f;
 //        float b = static_cast<float>(rand() % 255) / 255.0f;
-        printf("%f %f\n", r, g);
+//        printf("%f %f\n", r, g);
         lightAttr.lightColor = glm::vec3(r, g, 0.6);
 //		lightAttr.lightPos = glm::vec3(278.0f, 548.0f, 278.0f);
         lightAttr.lightPos = glm::vec3(278.0f, 548.0f, 278.0f);
@@ -1495,7 +1572,7 @@ private:
 		else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
 			throw std::runtime_error("failed to acquire swap chain image!");
 		}
-
+        updateVertexBuffer(imageIndex);
 		updateUniformBuffer(imageIndex);
 
 		if (imagesInFlight[imageIndex] != VK_NULL_HANDLE) {

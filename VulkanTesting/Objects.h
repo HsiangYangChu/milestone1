@@ -56,5 +56,6 @@ public:
 		glm::vec4 color);
 	static std::vector<uint16_t> generateIndex(uint16_t startIndex, bool isScene);
 	static std::vector<VertexData> generateSceneData();
+//    static void changeBoxData(uint8_t wallIndex, glm::vec3 color);
 };
 

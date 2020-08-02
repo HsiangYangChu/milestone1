@@ -122,7 +122,6 @@ std::vector<VertexData> Objects::generateSceneData() {
 	return data;
 }
 
-
 std::vector<uint16_t> Objects::generateIndex(uint16_t startIndex, bool isScene) {
 	std::vector<uint16_t> indexData;
 
@@ -153,3 +152,7 @@ std::vector<uint16_t> Objects::generateIndex(uint16_t startIndex, bool isScene) 
 		return indexData;
 	}
 }
+
+//void Objects::changeBoxData(uint8_t wallIndex, glm::vec3 color){
+//    
+//}
