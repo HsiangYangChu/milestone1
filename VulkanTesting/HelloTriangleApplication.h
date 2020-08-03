@@ -162,6 +162,9 @@ private:
 	size_t currentFrame = 0;
 
 	bool framebufferResized = false;
+    
+    bool stagOneIsFinished = false;
+    bool stagTwoIsFinished = false;
 
 	void initWindow() {
 		glfwInit();
@@ -1162,7 +1165,7 @@ private:
             glm::vec4(0.5f, 0.5f, 0.5f, 1.0f));
         auto vertexDataSceneBox = Objects::generateSceneData();
 
-        vertexData.insert( vertexData.end(), vertexDataSmallBox.begin(), vertexDataSmallBox.end());
+        vertexData.insert(vertexData.end(), vertexDataSmallBox.begin(), vertexDataSmallBox.end());
         vertexData.insert(vertexData.end(), vertexDataBigBox.begin(), vertexDataBigBox.end());
         vertexData.insert(vertexData.end(), vertexDataSceneBox.begin(), vertexDataSceneBox.end());
 
@@ -1422,13 +1425,11 @@ private:
 			VkBuffer vertexBuffersTmp[] = { vertexBuffers[i] };
 			VkDeviceSize offsetsTmp[] = { 0 };
 			vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, vertexBuffersTmp, offsetsTmp);
-//            vkCmdBindVertexBuffers(<#VkCommandBuffer commandBuffer#>, <#uint32_t firstBinding#>, <#uint32_t bindingCount#>, <#const VkBuffer *pBuffers#>, <#const VkDeviceSize *pOffsets#>)
 
 			vkCmdBindIndexBuffer(commandBuffers[i], indexBuffer, 0, VK_INDEX_TYPE_UINT16);
 
 			vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[i], 0, nullptr);
 
-			//vkCmdDrawIndexed(commandBuffers[i], static_cast<uint32_t>(indexData.size()), 1, 0, 0, 0);
 			vkCmdDrawIndexed(commandBuffers[i], 36, 1, 36, 0, 0);  // tall box
 			vkCmdDrawIndexed(commandBuffers[i], 30, 1, 72, 0, 0);  // scene
             
@@ -1467,25 +1468,39 @@ private:
 	}
     
     void updateVertexBuffer(uint32_t currentImage){
-        static auto startTime = std::chrono::high_resolution_clock::now();
-        
-        auto currentTime = std::chrono::high_resolution_clock::now();
-        float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
-        
-//        float r = static_cast<float>(static_cast<uint8_t>(time) % 255) / 255.0f;
         float r = 0.5f;
-//        float g = static_cast<float>((255 - (static_cast<uint8_t>(time) % 255)) % 255) / 255.0f;
         float g = 0.5f;
         float b = 0.5f;
+        static float rr = 1.0f;
+        static float gg = 0.0f;
+        if (stagOneIsFinished && rr > 0.0f) {
+            rr -= 0.001f;
+            gg += 0.001f;
+            r = rr;
+            g = gg;
+            b = 0.0f;
+        } else if (stagOneIsFinished) {
+            stagTwoIsFinished = true;
+        }
+        float a = -1.27f;
+        static float aa = -3.14;
+        if (stagTwoIsFinished && aa < 3.14f){
+            aa += 0.1f;
+            a = aa;
+        }
         
         auto vertexDataSmallBox = Objects::generateBoxData(
             glm::vec3(165.0f, 165.0f, 165.0f),
             glm::vec3(185.0f, 82.5f, 169.0f), glm::vec4(0.0f, 1.0f, 0.0f, -0.29f),
             glm::vec4(0.5f, 0.5f, 0.5f, 0.5f));
+//        auto vertexDataBigBox = Objects::generateBoxData(
+//            glm::vec3(165.0f, 330.0f, 165.0f),
+//            glm::vec3(368.0f, 165.0f, 351.0f), glm::vec4(0.0f, 1.0f, 0.0f, -1.27f),
+//                                                         glm::vec4(r, g, b, 1.0f));
         auto vertexDataBigBox = Objects::generateBoxData(
-            glm::vec3(165.0f, 330.0f, 165.0f),
-            glm::vec3(368.0f, 165.0f, 351.0f), glm::vec4(0.0f, 1.0f, 0.0f, -1.27f),
-                                                         glm::vec4(r, g, b, 1.0f));
+        glm::vec3(165.0f, 330.0f, 165.0f),
+                                                         glm::vec3(368.0f, 165.0f, 351.0f), glm::vec4(0.0f, 1.0f, 0.0f, a),
+                                                     glm::vec4(r, g, b, 1.0f));
         auto vertexDataSceneBox = Objects::generateSceneData();
         
         vertexData.clear();
@@ -1504,8 +1519,6 @@ private:
         memcpy(data, vertexData.data(), (size_t)bufferSize);
         vkUnmapMemory(device, stagingBufferMemory);
 
-//        createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexBuffer, vertexBufferMemory);
-
         copyBuffer(stagingBuffer, vertexBuffers[currentImage], bufferSize);
 
         vkDestroyBuffer(device, stagingBuffer, nullptr);
@@ -1520,11 +1533,8 @@ private:
         
 
 		UniformBufferObject ubo{};
-		//ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-		//ubo.model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 		ubo.model = glm::mat4(1.0f);
 
-		//ubo.view = glm::lookAt(glm::vec3(22.0f, 22.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
         glm::vec3 cameraPos;
         if (time < 8.0f) {
             glm::mat4 cameraModel = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
@@ -1534,11 +1544,7 @@ private:
         else {
             cameraPos = glm::vec3(278.0f, 273.0f, -800.0f);
         }
-//        ubo.view = glm::lookAt(cameraPos, glm::vec3(278.0f, 273.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         ubo.view = glm::lookAt(cameraPos, glm::vec3(278.0f, 273.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-//        ubo.view = glm::lookAt(cameraPos[i=(i+1)%2], glm::vec3(278.0f, 273.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-		//ubo.view = glm::lookAt(glm::vec3(100.0f, 300.0f, 800.0f), glm::vec3(100.0f, 0.0f, 100.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-
         ubo.proj = glm::perspective(glm::radians(45.0f), swapChainExtent.width / (float)swapChainExtent.height, 0.01f, 2000.0f);
 		ubo.proj[1][1] *= -1;
 
@@ -1549,27 +1555,21 @@ private:
 
 
 		UniformLightAttr lightAttr{};
-        static float r = 0.6f;
-        static float g = 0.6f;
-        static float b = 0.6f;
+        float r = 0.6f;
+        float g = 0.6f;
+        float b = 0.6f;
         static float rr = 1.0f;
         static float gg = 0.0f;
-//        if (time > 8.0f && r <= 1.0f && g > 0.0f)  {
-////            r = static_cast<float>(static_cast<uint8_t>(time) % 255) / 255.0f;
-////            g = static_cast<float>((255 - (static_cast<uint8_t>(time) % 255)) % 255) / 255.0f;
-//            r += 0.001;
-//            if (r > 1.0f) r  = 1.0f;
-//            g -= 0.001;
-//            b = 0.0f;
-//        }
         if (time > 8.0f && rr > 0.0f) {
             rr -= 0.001f;
             gg += 0.001f;
             r = rr;
             g = gg;
             b = 0.0f;
+        } else if (time > 8.0f) {
+            stagOneIsFinished = true;
         }
-        printf("%f, %f, %f\n", r, g, b) ;
+        
         lightAttr.lightColor = glm::vec3(r, g, b);
 //		lightAttr.lightPos = glm::vec3(278.0f, 548.0f, 278.0f);
         lightAttr.lightPos = glm::vec3(278.0f, 548.0f, 278.0f);
