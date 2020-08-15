@@ -84,7 +84,17 @@ struct UniformBufferObject {
 struct UniformLightAttr {
 	alignas(16) glm::vec3 lightPos;
 	alignas(16) glm::vec3 viewPos;
-	alignas(16) glm::vec3 lightColor;
+//	alignas(16) glm::vec3 lightColor;
+    alignas(16) glm::vec3 ambient;
+    alignas(16) glm::vec3 diffuse;
+    alignas(16) glm::vec3 specular;
+};
+
+struct UniformMaterial {
+    alignas(16) glm::vec3 ambient;
+    alignas(16) glm::vec3 diffuse;
+    alignas(16) glm::vec3 specular;
+    alignas(16) float shininess;
 };
 
 class HelloTriangleApplication {
@@ -149,6 +159,8 @@ private:
 	std::vector<VkDeviceMemory> uniformBuffersMemory;
 	std::vector<VkBuffer> uniformLightBuffers;
 	std::vector<VkDeviceMemory> uniformLightBuffersMemory;
+    std::vector<VkBuffer> uniformMaterialBuffers;
+    std::vector<VkDeviceMemory> uniformMaterialBuffersMemory;
 
 	VkDescriptorPool descriptorPool;
 	std::vector<VkDescriptorSet> descriptorSets;
@@ -246,6 +258,8 @@ private:
 			vkFreeMemory(device, uniformBuffersMemory[i], nullptr);
 			vkDestroyBuffer(device, uniformLightBuffers[i], nullptr);
 			vkFreeMemory(device, uniformLightBuffersMemory[i], nullptr);
+            vkDestroyBuffer(device, uniformMaterialBuffers[i], nullptr);
+            vkFreeMemory(device, uniformMaterialBuffersMemory[i], nullptr);
             vkDestroyBuffer(device, vertexBuffers[i], nullptr);
             vkFreeMemory(device, vertexBuffersMemory[i], nullptr);
 		}
@@ -591,8 +605,15 @@ private:
 		lightLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 		lightLayoutBinding.pImmutableSamplers = nullptr;
 		lightLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+        
+        VkDescriptorSetLayoutBinding materialLayoutBinding {};
+        materialLayoutBinding.binding = 3;
+        materialLayoutBinding.descriptorCount = 1;
+        materialLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        materialLayoutBinding.pImmutableSamplers = nullptr;
+        materialLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
-		std::array<VkDescriptorSetLayoutBinding, 3> bindings = { uboLayoutBinding, samplerLayoutBinding, lightLayoutBinding };
+		std::array<VkDescriptorSetLayoutBinding, 4> bindings = { uboLayoutBinding, samplerLayoutBinding, lightLayoutBinding, materialLayoutBinding };
 		VkDescriptorSetLayoutCreateInfo layoutInfo{};
 		layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 		layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
@@ -1210,26 +1231,32 @@ private:
 	void createUniformBuffers() {
 		VkDeviceSize bufferSize = sizeof(UniformBufferObject);
 		VkDeviceSize lightBufferSize = sizeof(UniformLightAttr);
+        VkDeviceSize materialBufferSize = sizeof(UniformMaterial);
 
 		uniformBuffers.resize(swapChainImages.size());
 		uniformBuffersMemory.resize(swapChainImages.size());
 		uniformLightBuffers.resize(swapChainImages.size());
 		uniformLightBuffersMemory.resize(swapChainImages.size());
+        uniformMaterialBuffers.resize(swapChainImages.size());
+        uniformMaterialBuffersMemory.resize(swapChainImages.size());
 
 		for (size_t i = 0; i < swapChainImages.size(); i++) {
 			createBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, uniformBuffers[i], uniformBuffersMemory[i]);
 			createBuffer(lightBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, uniformLightBuffers[i], uniformLightBuffersMemory[i]);
+            createBuffer(materialBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, uniformMaterialBuffers[i], uniformMaterialBuffersMemory[i]);
 		}
 	}
 
 	void createDescriptorPool() {
-		std::array<VkDescriptorPoolSize, 3> poolSizes{};
+		std::array<VkDescriptorPoolSize, 4> poolSizes{};
 		poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 		poolSizes[0].descriptorCount = static_cast<uint32_t>(swapChainImages.size());
 		poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 		poolSizes[1].descriptorCount = static_cast<uint32_t>(swapChainImages.size());
 		poolSizes[2].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 		poolSizes[2].descriptorCount = static_cast<uint32_t>(swapChainImages.size());
+        poolSizes[3].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        poolSizes[3].descriptorCount = static_cast<uint32_t>(swapChainImages.size());
 
 		VkDescriptorPoolCreateInfo poolInfo{};
 		poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -1260,18 +1287,23 @@ private:
 			bufferInfo.buffer = uniformBuffers[i];
 			bufferInfo.offset = 0;
 			bufferInfo.range = sizeof(UniformBufferObject);
+            
+            VkDescriptorImageInfo imageInfo{};
+            imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            imageInfo.imageView = textureImageView;
+            imageInfo.sampler = textureSampler;
+            
+            VkDescriptorBufferInfo lightBufferInfo{};
+            lightBufferInfo.buffer = uniformLightBuffers[i];
+            lightBufferInfo.offset = 0;
+            lightBufferInfo.range = sizeof(UniformLightAttr);
+            
+            VkDescriptorBufferInfo materialBufferInfo{};
+            materialBufferInfo.buffer = uniformMaterialBuffers[i];
+            materialBufferInfo.offset = 0;
+            materialBufferInfo.range = sizeof(UniformMaterial);
 
-			VkDescriptorImageInfo imageInfo{};
-			imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-			imageInfo.imageView = textureImageView;
-			imageInfo.sampler = textureSampler;
-
-			VkDescriptorBufferInfo lightBufferInfo{};
-			lightBufferInfo.buffer = uniformLightBuffers[i];
-			lightBufferInfo.offset = 0;
-			lightBufferInfo.range = sizeof(UniformLightAttr);
-
-			std::array<VkWriteDescriptorSet, 3> descriptorWrites{};
+			std::array<VkWriteDescriptorSet, 4> descriptorWrites{};
 
 			descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 			descriptorWrites[0].dstSet = descriptorSets[i];
@@ -1296,6 +1328,14 @@ private:
 			descriptorWrites[2].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 			descriptorWrites[2].descriptorCount = 1;
 			descriptorWrites[2].pBufferInfo = &lightBufferInfo;
+            
+            descriptorWrites[3].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            descriptorWrites[3].dstSet = descriptorSets[i];
+            descriptorWrites[3].dstBinding = 3;
+            descriptorWrites[3].dstArrayElement = 0;
+            descriptorWrites[3].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            descriptorWrites[3].descriptorCount = 1;
+            descriptorWrites[3].pBufferInfo = &materialBufferInfo;
 
 			vkUpdateDescriptorSets(device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
 		}
@@ -1570,7 +1610,10 @@ private:
             stagOneIsFinished = true;
         }
         
-        lightAttr.lightColor = glm::vec3(r, g, b);
+//        lightAttr.lightColor = glm::vec3(r, g, b);
+        lightAttr.ambient = glm::vec3(r, g, b) * glm::vec3(0.2f);
+        lightAttr.diffuse = glm::vec3(r, g, b) * glm::vec3(0.5f);
+        lightAttr.specular = glm::vec3(r, g, b);
 //		lightAttr.lightPos = glm::vec3(278.0f, 548.0f, 278.0f);
         lightAttr.lightPos = glm::vec3(278.0f, 548.0f, 278.0f);
 //		lightAttr.viewPos = glm::vec3(278.0f, 273.0f, -800.0f);
@@ -1579,6 +1622,16 @@ private:
 		vkMapMemory(device, uniformLightBuffersMemory[currentImage], 0, sizeof(lightAttr), 0, &data);
 		memcpy(data, &lightAttr, sizeof(lightAttr));
 		vkUnmapMemory(device, uniformLightBuffersMemory[currentImage]);
+        
+        UniformMaterial material{};
+        material.ambient = glm::vec3(1.0f, 0.5f, 0.31f);
+        material.diffuse = glm::vec3(1.0f, 0.5f, 0.31f);
+        material.specular = glm::vec3(0.5f, 0.5f, 0.5f);
+        material.shininess = 32.0f;
+        
+        vkMapMemory(device, uniformMaterialBuffersMemory[currentImage], 0, sizeof(material), 0, &data);
+        memcpy(data, &material, sizeof(material));
+        vkUnmapMemory(device, uniformMaterialBuffersMemory[currentImage]);
 	}
 
 	void drawFrame() {
